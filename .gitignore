@@ -1,0 +1,17 @@
+# Entorno virtual de Python
+venv/
+env/
+
+# Base de datos SQLite local
+*.db
+noc_syslog.db
+
+# Variables de entorno con posibles datos locales
+.env
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Logs generados localmente
+logs/*.log

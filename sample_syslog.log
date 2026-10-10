@@ -1,0 +1,4 @@
+2026-09-29T10:15:30Z 192.168.1.1 %LINK-3-UPDOWN: Interface GigabitEthernet0/1, changed state to down
+2026-09-29T10:16:02Z 192.168.1.254 date=2026-09-29 time=10:16:02 devname="FG-CORE-01" devid="FG100E123456" logid="0100032001" type="event" subtype="system" level="critical" msg="High CPU usage detected (92%)"
+2026-09-29T10:18:45Z 10.0.0.1 %%01OSPF/2/IF_CFG_ERROR(l)[0]: OSPF configuration error on interface Vlanif10
+2026-09-29T10:20:00Z 192.168.1.1 %SYS-5-CONFIG_I: Configured from console by admin on vty0

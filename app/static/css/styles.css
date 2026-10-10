@@ -1,0 +1,45 @@
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+    border-radius: 8px;
+}
+
+.table th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #a0a0a0;
+}
+
+.badge-severity-0, .badge-severity-1, .badge-severity-2 {
+    background-color: #dc3545; /* Rojo para Críticos */
+    color: white;
+}
+
+.badge-severity-3 {
+    background-color: #fd7e14; /* Naranja para Errores */
+    color: white;
+}
+
+.badge-severity-4 {
+    background-color: #ffc107; /* Amarillo para Advertencias */
+    color: black;
+}
+
+.badge-severity-5, .badge-severity-6, .badge-severity-7 {
+    background-color: #0dcaf0; /* Azul para Informativos */
+    color: black;
+}
+
+.view-section {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

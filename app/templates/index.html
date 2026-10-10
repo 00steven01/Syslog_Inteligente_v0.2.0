@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOC Syslog Inteligente - Panel Alfa</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome para Iconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Estilos Personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Chart.js para Gráficas Interactivas -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Fuentes Profesionales Enterprise -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --bg-body: #F8FAFC;
+        --bg-card: #FFFFFF;
+        --border-color: #E2E8F0;
+        --text-main: #0F172A;
+        --text-muted: #64748B;
+        --cisco-color: #0284C7;
+        --fortinet-color: #D97706;
+        --huawei-color: #0D9488;
+        --danger-color: #E11D48;
+        --warning-color: #D97706;
+        --info-color: #2563EB;
+        /* Hacer visible el ícono del calendario en inputs de tipo fecha */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    display: block !important;
+    filter: invert(0.3) !important;
+    cursor: pointer !important;
+    opacity: 0.8 !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1 !important;
+}
+    }
+
+    /* Fondo Claro Enterprise */
+    body {
+        background-color: var(--bg-body) !important;
+        background-image: radial-gradient(#CBD5E1 0.8px, transparent 0.8px);
+        background-size: 24px 24px;
+        color: var(--text-main) !important;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    }
+
+    code, pre, .font-monospace, #console-output {
+        font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    /* Fix para Íconos de Calendario/Hora en Inputs de Fecha */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator,
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        filter: invert(0) !important;
+        cursor: pointer;
+        opacity: 0.8;
+    }
+
+    /* Modales Flotantes en Tema Claro con Alto Contraste */
+    #customVendorDevicesModal .card,
+    #customEventsFilterModal .card,
+    #customAddDeviceModal .card,
+    #customAddIncidentModal .card,
+    .modal-content {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border: 1px solid #CBD5E1 !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Fix para Tablas dentro de Ventanas Emergentes/Modales */
+    .table, .table-dark {
+        --bs-table-bg: #FFFFFF !important;
+        --bs-table-color: #0F172A !important;
+        color: #0F172A !important;
+    }
+
+    .table thead th {
+        background-color: #F1F5F9 !important;
+        color: #334155 !important;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-bottom: 2px solid #E2E8F0 !important;
+    }
+
+    .table tbody tr {
+        background-color: #FFFFFF !important;
+        border-bottom: 1px solid #F1F5F9 !important;
+    }
+
+    .table tbody tr:hover {
+        background-color: #F8FAFC !important;
+    }
+
+    .table tbody td {
+        color: #0F172A !important;
+    }
+
+    /* Fix para Encabezados y Pie de Modales (Cabecera y Botón Cerrar) */
+    .card-header.bg-secondary, .card-footer.bg-secondary {
+        background-color: #F8FAFC !important;
+        border-color: #E2E8F0 !important;
+        color: #0F172A !important;
+    }
+
+    /* Fix para Botón "Cerrar" en Modales */
+    .btn-outline-light {
+        color: #334155 !important;
+        border-color: #94A3B8 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    .btn-outline-light:hover {
+        background-color: #F1F5F9 !important;
+        color: #0F172A !important;
+    }
+
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(0) !important;
+    }
+
+    /* Tarjetas del Dashboard principal */
+    .card {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05) !important;
+        color: var(--text-main) !important;
+    }
+
+    .card[style*="cursor: pointer"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .text-white, .text-light, h1, h2, h3, h4, h5, h6 {
+        color: var(--text-main) !important;
+    }
+
+    .text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    /* Form Inputs & Selects */
+    .form-control, .form-select {
+        background-color: #FFFFFF !important;
+        border: 1px solid #CBD5E1 !important;
+        color: #0F172A !important;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #2563EB !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    }
+
+    /* Bordes e Identificadores */
+    .border-danger { border-left: 4px solid var(--danger-color) !important; }
+    .border-warning { border-left: 4px solid var(--warning-color) !important; }
+    .border-info { border-left: 4px solid var(--info-color) !important; }
+    .border-primary { border-left: 4px solid var(--cisco-color) !important; }
+    .border-success { border-left: 4px solid var(--huawei-color) !important; }
+</style>
+</head>
+<body>
+
+    <!-- MODAL DE LOGIN OBLIGATORIO -->
+    <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-primary shadow-lg">
+                <div class="modal-header border-secondary text-center">
+                    <h5 class="modal-title w-100 fw-bold text-primary">
+                        <i class="fa-solid fa-shield-halved me-2"></i>Acceso al NOC - Autenticación
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <form id="form-login">
+                        <div class="mb-3">
+                            <label class="form-label">Cédula de Ciudadanía (CC)</label>
+                            <input type="text" id="login-cc" class="form-control bg-secondary text-white border-0" placeholder="Ej: 123456789 (Solo números)" required autocomplete="off">
+                            <div class="form-text text-muted small">Solo se permiten números enteros.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña</label>
+                            <input type="password" id="login-password" class="form-control bg-secondary text-white border-0" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Iniciar Sesión</button>
+                    </form>
+                </div>
+                <div class="modal-footer border-secondary justify-content-center">
+                    <small class="text-muted">Laboratorio Alfa NOC - Credenciales: <strong>123456789</strong> / <strong>admin123</strong></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div id="app-content" class="d-none">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-secondary border-bottom border-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold text-primary" href="#">
+                    <i class="fa-solid fa-network-wired me-2"></i>NOC Syslog <span class="badge bg-primary fs-6">Alfa</span>
+                </a>
+                <div class="navbar-nav me-auto">
+                    <a class="nav-link active" id="tab-dashboard" href="#" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+                    <a class="nav-link" id="tab-devices" href="#" onclick="switchTab('devices')"><i class="fa-solid fa-server me-1"></i> Inventario</a>
+                    <a class="nav-link" id="tab-syslog" href="#" onclick="switchTab('syslog')"><i class="fa-solid fa-list-check me-1"></i> Eventos Syslog</a>
+                    <a class="nav-link" id="tab-incidents" href="#" onclick="switchTab('incidents')"><i class="fa-solid fa-triangle-exclamation me-1"></i> Incidentes</a>
+                    <a class="nav-link" id="tab-generator" href="#" onclick="switchTab('generator')"><i class="fa-solid fa-code me-1"></i> Generador Multivendor</a>
+                    <a class="nav-link" id="tab-console" href="#" onclick="switchTab('console')"><i class="fa-solid fa-terminal me-1"></i> Consola Simulada</a>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-white small me-2"><i class="fa-solid fa-user me-1 text-info"></i> CC: <strong id="user-display-cc">---</strong></span>
+                    <span class="badge bg-outline-info border border-info text-info small" id="ntp-status-badge">
+                        <i class="fa-solid fa-clock-rotate-left me-1"></i> NTP: Verificando...
+                    </span>
+                    <span class="navbar-text text-light small fw-mono">
+                        <i class="fa-solid fa-clock me-1 text-primary"></i> <span id="clock">--:--:--</span>
+                    </span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+
+            <div id="alert-container"></div>
+
+            <!-- 1. DASHBOARD -->
+            <div id="view-dashboard" class="view-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-light mb-0">Métricas del Centro de Operaciones de Red (NOC)</h4>
+                    <button class="btn btn-danger btn-sm" onclick="openSimulateModal()">
+                        <i class="fa-solid fa-bug me-1"></i> Simular Fallas Personalizadas
+                    </button>
+                </div>
+                
+                <!-- SECCIÓN DE GRÁFICAS VISUALES -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-dark border-secondary shadow-sm">
+                        <div class="card-header bg-secondary text-white small fw-bold">
+                            <i class="fa-solid fa-chart-pie me-2"></i>Distribución de Eventos por Severidad
+                        </div>
+                        <div class="card-body d-flex justify-content-center" style="height: 220px;">
+                            <canvas id="chart-severity"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-dark border-secondary shadow-sm">
+                        <div class="card-header bg-secondary text-white small fw-bold">
+                            <i class="fa-solid fa-chart-column me-2"></i>Eventos Ingestados por Fabricante
+                        </div>
+                        <div class="card-body d-flex justify-content-center" style="height: 220px;">
+                            <canvas id="chart-vendors"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                    <!-- PANEL DE ESTADOS (IZQUIERDA) Y FABRICANTES (DERECHA) -->
+                <div class="row g-2 mb-3">
+                    <!-- COLUMNA IZQUIERDA: ESTADOS -->
+                    <!-- COLUMNA IZQUIERDA: ESTADOS (INTERACTIVOS) -->
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-danger shadow-sm text-white mb-2" style="cursor: pointer;" onclick="openEventsFilterModal('critical')">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="card-subtitle text-muted mb-0 small">Eventos Críticos (0-3)</h6>
+                                    <span class="badge bg-outline-danger border border-danger text-danger" style="font-size: 10px;">Ver detalles <i class="fa-solid fa-chevron-right ms-1"></i></span>
+                                </div>
+                                <h3 class="card-title mt-1 fw-bold text-danger mb-0" id="stat-critical-count">0</h3>
+                            </div>
+                        </div>
+
+                        <div class="card bg-dark border-warning shadow-sm text-white mb-2" style="cursor: pointer;" onclick="openEventsFilterModal('warning')">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="card-subtitle text-muted mb-0 small">Advertencias (4)</h6>
+                                    <span class="badge bg-outline-warning border border-warning text-warning" style="font-size: 10px;">Ver detalles <i class="fa-solid fa-chevron-right ms-1"></i></span>
+                                </div>
+                                <h3 class="card-title mt-1 fw-bold text-warning mb-0" id="stat-warning-count">0</h3>
+                            </div>
+                        </div>
+
+                        <div class="card bg-dark border-info shadow-sm text-white mb-2" style="cursor: pointer;" onclick="openEventsFilterModal('incidents')">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="card-subtitle text-muted mb-0 small">Incidentes Activos</h6>
+                                    <span class="badge bg-outline-info border border-info text-info" style="font-size: 10px;">Ver detalles <i class="fa-solid fa-chevron-right ms-1"></i></span>
+                                </div>
+                                <h3 class="card-title mt-1 fw-bold text-info mb-0" id="stat-incidents-count">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMNA DERECHA: DISPOSITIVOS POR FABRICANTE -->
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-primary shadow-sm text-white mb-2" style="cursor: pointer;" onclick="openVendorDevicesModal('Cisco')">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="card-subtitle text-muted mb-0 small"><i class="fa-solid fa-server me-1 text-primary"></i>Cisco</h6>
+                                    <span class="badge bg-outline-primary border border-primary text-primary" style="font-size: 10px;">Ver <i class="fa-solid fa-chevron-right ms-1"></i></span>
+                                </div>
+                                <h3 class="card-title mt-1 fw-bold mb-0 text-primary" id="stat-cisco-count">0</h3>
+                            </div>
+                        </div>
+
+                        <div class="card bg-dark border-warning shadow-sm text-white mb-2" style="cursor: pointer;" onclick="openVendorDevicesModal('Fortinet')">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="card-subtitle text-muted mb-0 small"><i class="fa-solid fa-shield-halved me-1 text-warning"></i>Fortinet</h6>
+                                    <span class="badge bg-outline-warning border border-warning text-warning" style="font-size: 10px;">Ver <i class="fa-solid fa-chevron-right ms-1"></i></span>
+                                </div>
+                                <h3 class="card-title mt-1 fw-bold mb-0 text-warning" id="stat-fortinet-count">0</h3>
+                            </div>
+                        </div>
+
+                        <div class="card bg-dark border-success shadow-sm text-white mb-2" style="cursor: pointer;" onclick="openVendorDevicesModal('Huawei')">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="card-subtitle text-muted mb-0 small"><i class="fa-solid fa-network-wired me-1 text-success"></i>Huawei</h6>
+                                    <span class="badge bg-outline-success border border-success text-success" style="font-size: 10px;">Ver <i class="fa-solid fa-chevron-right ms-1"></i></span>
+                                </div>
+                                <h3 class="card-title mt-1 fw-bold mb-0 text-success" id="stat-huawei-count">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              
+
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-bolt me-2"></i>Últimos Eventos Ingestados</span>
+                        <button class="btn btn-sm btn-outline-light" onclick="loadDashboardData()"><i class="fa-solid fa-rotate me-1"></i> Actualizar</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0 align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha / Hora</th>
+                                        <th>Origen IP</th>
+                                        <th>Severidad</th>
+                                        <th>Mensaje</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-recent-events">
+                                    <tr><td colspan="4" class="text-center text-muted">Cargando datos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. INVENTARIO DE DISPOSITIVOS -->
+            <div id="view-devices" class="view-section d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-light">Inventario de Equipos Multivendor</h4>
+                    <button class="btn btn-primary" onclick="openAddDeviceModal()">
+                         <i class="fa-solid fa-plus me-1"></i> Agregar Dispositivo
+                    </button>
+                </div>
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped mb-0 align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Hostname</th>
+                                        <th>Dirección IP</th>
+                                        <th>Marca</th>
+                                        <th>Modelo</th>
+                                        <th>Versión SO</th>
+                                        <th>Ubicación</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="devices-table-body">
+                                    <tr><td colspan="7" class="text-center text-muted">Cargando inventario...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. SYSLOG -->
+            <div id="view-syslog" class="view-section d-none">
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="text-light">Registro de Eventos Syslog</h4>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importSyslogModal">
+                            <i class="fa-solid fa-file-import me-1"></i> Importar Archivo Log
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-3 p-3">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label small text-muted">Severidad:</label>
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn btn-sm btn-outline-light active" onclick="filterSyslogBySeverity(null, this)">Todos</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="filterSyslogBySeverity(2, this)">Crítico (2)</button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="filterSyslogBySeverity(3, this)">Error (3)</button>
+                                <button class="btn btn-sm btn-outline-info" onclick="filterSyslogBySeverity(4, this)">Warning (4)</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">Desde (Fecha Inicial):</label>
+                            <input type="date" id="filter-start-date" class="form-control form-control-sm bg-secondary text-white border-0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">Hasta (Max Hoy):</label>
+                            <input type="date" id="filter-end-date" class="form-control form-control-sm bg-secondary text-white border-0">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-sm btn-primary w-100" onclick="applyDateFilters()">
+                                <i class="fa-solid fa-filter me-1"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0 align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Fecha / Hora</th>
+                                        <th>Origen IP</th>
+                                        <th>Severidad</th>
+                                        <th>Mensaje Log</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="syslog-table-body">
+                                    <tr><td colspan="6" class="text-center text-muted">Cargando eventos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. INCIDENTES -->
+            <div id="view-incidents" class="view-section d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-light">Gestión de Incidentes del NOC</h4>
+                    <button class="btn btn-warning" onclick="openAddIncidentModal()">
+                          <i class="fa-solid fa-circle-plus me-1"></i> Crear Incidente Manual
+                    </button>
+                </div>
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped mb-0 align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Título</th>
+                                        <th>Dispositivo</th>
+                                        <th>Prioridad</th>
+                                        <th>Estado</th>
+                                        <th>Responsable</th>
+                                        <th>Causa Raíz</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incidents-table-body">
+                                    <tr><td colspan="7" class="text-center text-muted">Cargando incidentes...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. GENERADOR -->
+            <div id="view-generator" class="view-section d-none">
+                <h4 class="text-light mb-3">Generador de Configuraciones Syslog</h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-dark border-secondary p-3">
+                            <form id="form-generate-template">
+                                <div class="mb-3">
+                                    <label class="form-label">Fabricante / Marca</label>
+                                    <select id="gen-vendor" class="form-select bg-secondary text-white border-0">
+                                        <option value="cisco">Cisco IOS / IOS XE</option>
+                                        <option value="fortinet">Fortinet FortiOS</option>
+                                        <option value="huawei">Huawei VRP</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">IP Servidor Syslog (NOC)</label>
+                                    <input type="text" id="gen-ip" class="form-control bg-secondary text-white border-0" value="192.168.1.254" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Generar Configuración</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                                <span>Sintaxis Generada</span>
+                                <button class="btn btn-sm btn-outline-light" onclick="copyTemplate()"><i class="fa-solid fa-copy me-1"></i> Copiar</button>
+                            </div>
+                            <div class="card-body">
+                                <pre id="template-output" class="text-success font-monospace mb-0" style="white-space: pre-wrap;">// Seleccione un fabricante y presione 'Generar Configuración'...</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. CONSOLA SIMULADA -->
+            <div id="view-console" class="view-section d-none">
+                <h4 class="text-light mb-3">Consola Diagnóstica Simulada <span class="badge bg-warning text-dark fs-6">Solo Lectura</span></h4>
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Seleccionar Entorno:</label>
+                                <select id="console-vendor" class="form-select bg-secondary text-white border-0">
+                                    <option value="cisco">Cisco Router/Switch</option>
+                                    <option value="fortinet">Fortinet Firewall</option>
+                                    <option value="huawei">Huawei Core Switch</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label small text-muted">Comandos de Diagnóstico Permitidos:</label>
+<div class="small text-info">
+    <strong>Cisco:</strong> <code>show ip int brief</code>, <code>show logging</code>, <code>show bgp summary</code>, <code>show version</code>, <code>show processes cpu</code><br>
+    <strong>Fortinet:</strong> <code>get system status</code>, <code>get system performance status</code>, <code>get router info bgp summary</code>, <code>diagnose sys top</code><br>
+    <strong>Huawei:</strong> <code>display ip interface brief</code>, <code>display logbuffer</code>, <code>display bgp peer</code>, <code>display cpu-usage</code>
+</div>
+                            </div>
+                        </div>
+
+                        <div id="terminal-screen" class="p-3 bg-black text-light font-monospace rounded mb-3 border border-secondary" style="height: 300px; overflow-y: auto;">
+                            <div class="text-muted">=== Consola Segura Simulada NOC Alfa v1.0 ===</div>
+                        </div>
+
+                        <form id="form-console-input" class="d-flex gap-2">
+                            <input type="text" id="console-cmd" class="form-control bg-secondary text-white border-0 font-monospace" placeholder="Escriba un comando..." required>
+                            <button type="submit" class="btn btn-success"><i class="fa-solid fa-paper-plane"></i> Ejecutar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VENTANA FLOTANTE DE SIMULACIÓN NATIVA -->
+    <div id="customSimulateModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1050;">
+        <div class="card bg-dark text-white border-danger shadow-lg" style="max-width: 500px; width: 90%;">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-danger"><i class="fa-solid fa-bug me-2"></i>Simulador de Fallas en Vivo</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeSimulateModal()"></button>
+            </div>
+            <form id="form-simulate-failures">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-light">1. Seleccionar Tipo de Falla / Evento</label>
+                        <select id="sim-fail-type" class="form-select bg-secondary text-white border-0" required>
+                            <option value="link_flap">Caída de Interfaz Física (%LINK-2-DOWN)</option>
+                            <option value="bgp_down">Pérdida de Adyacencia BGP (%BGP-5-ADJCHANGE)</option>
+                            <option value="cpu_spike">Saturación de CPU / Memoria (High CPU 98%)</option>
+                            <option value="ospf_error">Error de Configuración OSPF (MTU Mismatch)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">2. Fabricante / Vendor Afectado</label>
+                        <select id="sim-vendor" class="form-select bg-secondary text-white border-0" required>
+                            <option value="Cisco">Cisco IOS / IOS XE</option>
+                            <option value="Fortinet">Fortinet FortiOS</option>
+                            <option value="Huawei">Huawei VRP</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">3. Nivel de Severidad Syslog</label>
+                        <select id="sim-severity" class="form-select bg-secondary text-white border-0" required>
+                            <option value="2">Crítico (Emergency / Critical - Nivel 2)</option>
+                            <option value="3">Error (Error - Nivel 3)</option>
+                            <option value="4" selected>Advertencia (Warning - Nivel 4)</option>
+                            <option value="6">Informativo (Informational - Nivel 6)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">4. Cantidad de Eventos a Inyectar</label>
+                        <input type="number" id="sim-count" class="form-control bg-secondary text-white border-0" value="3" min="1" max="10" required>
+                    </div>
+                </div>
+                <div class="card-footer bg-secondary text-end">
+                    <button type="button" class="btn btn-outline-light me-2" onclick="closeSimulateModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-danger font-weight-bold">
+                        <i class="fa-solid fa-bolt me-1"></i> Simular Fallas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR DISPOSITIVO -->
+    <!-- VENTANA FLOTANTE NATIVA PARA AGREGAR DISPOSITIVO -->
+    <div id="customAddDeviceModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1050;">
+        <div class="card bg-dark text-white border-primary shadow-lg" style="max-width: 550px; width: 90%;">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary"><i class="fa-solid fa-server me-2"></i>Registrar Dispositivo en Inventario</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeAddDeviceModal()"></button>
+            </div>
+            <form id="form-add-device">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-light">Hostname / Nombre del Equipo</label>
+                        <input type="text" id="dev-hostname" class="form-control bg-secondary text-white border-0" placeholder="Ej: RTR-BORDER-02" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Dirección IP</label>
+                        <input type="text" id="dev-ip" class="form-control bg-secondary text-white border-0" placeholder="Ej: 192.168.1.10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Marca / Fabricante</label>
+                        <select id="dev-vendor" class="form-select bg-secondary text-white border-0" required>
+                            <option value="Cisco">Cisco</option>
+                            <option value="Fortinet">Fortinet</option>
+                            <option value="Huawei">Huawei</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-light">Modelo</label>
+                            <input type="text" id="dev-model" class="form-control bg-secondary text-white border-0" placeholder="Ej: ISR 4331">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-light">Versión Sistema Operativo</label>
+                            <input type="text" id="dev-os" class="form-control bg-secondary text-white border-0" placeholder="Ej: IOS XE 17.03">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Ubicación Física / Sede</label>
+                        <input type="text" id="dev-location" class="form-control bg-secondary text-white border-0" placeholder="Ej: Data Center Principal - Rack 02">
+                    </div>
+                </div>
+                <div class="card-footer bg-secondary text-end">
+                    <button type="button" class="btn btn-outline-light me-2" onclick="closeAddDeviceModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold">
+                        <i class="fa-solid fa-save me-1"></i> Guardar Dispositivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL IMPORTAR SYSLOG -->
+    <div class="modal fade" id="importSyslogModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title"><i class="fa-solid fa-file-import me-2"></i>Importar Texto Syslog</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-import-syslog">
+                    <div class="modal-body">
+                        <textarea id="syslog-raw-text" class="form-control bg-secondary text-white border-0 font-monospace" rows="8" placeholder="Pegue sus registros aquí..." required></textarea>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Procesar e Ingestar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CREAR INCIDENTE -->
+    <!-- VENTANA FLOTANTE NATIVA PARA CREAR INCIDENTE -->
+    <div id="customAddIncidentModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1050;">
+        <div class="card bg-dark text-white border-warning shadow-lg" style="max-width: 550px; width: 90%;">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-warning"><i class="fa-solid fa-triangle-exclamation me-2"></i>Nuevo Incidente Manual</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeAddIncidentModal()"></button>
+            </div>
+            <form id="form-add-incident">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-light">Título del Incidente</label>
+                        <input type="text" id="inc-title" class="form-control bg-secondary text-white border-0" placeholder="Ej: Caída de Enlace Principal" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Dispositivo Afectado</label>
+                        <select id="inc-device-id" class="form-select bg-secondary text-white border-0" required></select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-light">Prioridad</label>
+                            <select id="inc-priority" class="form-select bg-secondary text-white border-0">
+                                <option value="Low">Baja (Low)</option>
+                                <option value="Medium" selected>Media (Medium)</option>
+                                <option value="High">Alta (High)</option>
+                                <option value="Critical">Crítica (Critical)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-light">Responsable</label>
+                            <input type="text" id="inc-assignee" class="form-control bg-secondary text-white border-0" value="Operador NOC">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Causa Raíz Presunta</label>
+                        <textarea id="inc-root-cause" class="form-control bg-secondary text-white border-0" rows="2" placeholder="Ej: Falla en el proveedor de fibra óptica"></textarea>
+                    </div>
+                </div>
+                <div class="card-footer bg-secondary text-end">
+                    <button type="button" class="btn btn-outline-light me-2" onclick="closeAddIncidentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-warning font-weight-bold">
+                        <i class="fa-solid fa-save me-1"></i> Crear Ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- VENTANA FLOTANTE DE DETALLES DE EQUIPOS POR FABRICANTE -->
+    <div id="customVendorDevicesModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1060;">
+        <div class="card bg-dark text-white border-info shadow-lg" style="max-width: 800px; width: 95%;">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-info"><i class="fa-solid fa-server me-2"></i>Dispositivos Registrados - <span id="vendor-modal-title">Cisco</span></h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeVendorDevicesModal()"></button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Hostname</th>
+                                <th>Dirección IP</th>
+                                <th>Modelo</th>
+                                <th>Versión SO</th>
+                                <th>Ubicación</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendor-devices-table-body">
+                            <tr><td colspan="6" class="text-center text-muted">Cargando equipos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-secondary text-end">
+                <button type="button" class="btn btn-outline-light" onclick="closeVendorDevicesModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <!-- VENTANA FLOTANTE DE DETALLES DE EVENTOS / INCIDENTES POR ESTADO -->
+    <div id="customEventsFilterModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1060;">
+        <div class="card bg-dark text-white border-warning shadow-lg" style="max-width: 850px; width: 95%;">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-warning"><i class="fa-solid fa-list-check me-2"></i>Detalle de Registros - <span id="events-modal-title">Eventos Críticos</span></h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeEventsFilterModal()"></button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-dark table-striped mb-0 align-middle">
+                        <thead id="events-modal-thead">
+                            <tr>
+                                <th>Fecha / Hora</th>
+                                <th>Origen IP</th>
+                                <th>Severidad</th>
+                                <th>Mensaje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-modal-tbody">
+                            <tr><td colspan="4" class="text-center text-muted">Cargando registros...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-secondary text-end">
+                <button type="button" class="btn btn-outline-light" onclick="closeEventsFilterModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+   
+    <!-- ORDEN DE CARGA SEGURO DE SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=9"></script>
+
+
+</body>
+</html>
